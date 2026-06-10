@@ -58,6 +58,22 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Notice id must be a positive integer." });
   }
 
+  if (req.method === "GET") {
+    try {
+      const notice = await prisma.notice.findUnique({
+        where: { id: noticeId },
+      });
+
+      if (!notice) {
+        return res.status(404).json({ error: "Notice not found." });
+      }
+
+      return res.status(200).json(notice);
+    } catch (error) {
+      return res.status(500).json({ error: "Failed to fetch notice." });
+    }
+  }
+
   if (req.method === "PUT") {
     const { errors, values } = validateNotice(req.body);
 
@@ -105,6 +121,6 @@ export default async function handler(req, res) {
     }
   }
 
-  res.setHeader("Allow", ["PUT", "DELETE"]);
+  res.setHeader("Allow", ["GET", "PUT", "DELETE"]);
   return res.status(405).json({ error: `Method ${req.method} not allowed.` });
 }
