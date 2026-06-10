@@ -3,18 +3,30 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
+}
+
+enum Category {
+  Exam
+  Event
+  General
+}
+
+enum Priority {
+  Normal
+  Urgent
 }
 
 model Notice {
-  id          Int      @id @default(autoincrement())
-  title       String   @db.VarChar(191)
-  body        String   @db.Text
-  category    String   @db.VarChar(100)
-  priority    Int
+  id          Int       @id @default(autoincrement())
+  title       String
+  body        String
+  category    Category
+  priority    Priority  @default(Normal)
   publishDate DateTime
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([category])
   @@index([priority])
