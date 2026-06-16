@@ -29,6 +29,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [deletingNoticeId, setDeletingNoticeId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   async function refreshNotices() {
     try {
@@ -84,6 +85,27 @@ export default function Home() {
   }
 
   const sortedNotices = useMemo(() => sortNotices(notices), [notices]);
+  const filteredNotices = useMemo(() => {
+    const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+
+    if (!normalizedSearchTerm) {
+      return sortedNotices;
+    }
+
+    return sortedNotices.filter((notice) => {
+      const searchableText = [
+        notice.title,
+        notice.body,
+        notice.category,
+        notice.priority,
+        notice.publishDate ? new Date(notice.publishDate).toLocaleDateString("en") : "",
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return searchableText.includes(normalizedSearchTerm);
+    });
+  }, [searchTerm, sortedNotices]);
 
   return (
     <>
@@ -93,14 +115,25 @@ export default function Home() {
 
       <main className="min-h-screen bg-[#FAF7F2] px-4 py-10 text-[#2F2824] sm:px-6 lg:px-8">
         <div className="mx-auto max-w-5xl">
-          <header className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-            <div>
+          <header className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+            <div className="w-full max-w-2xl">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C78FA0]">
                 Reno Platforms
               </p>
               <h1 className="mt-3 text-4xl font-semibold text-[#2F2824] sm:text-5xl">
                 Notice Board
               </h1>
+              <label htmlFor="notice-search" className="sr-only">
+                Search notices
+              </label>
+              <input
+                id="notice-search"
+                type="search"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Search here..."
+                className="mt-5 w-full rounded-xl border border-[#E6D8CF] bg-[#FFFDFB] px-4 py-3 text-sm text-[#2F2824] shadow-[0_10px_30px_rgba(91,71,61,0.06)] outline-none transition placeholder:text-[#9E8F87] focus:border-[#C78FA0] focus:ring-4 focus:ring-[#C78FA0]/15"
+              />
             </div>
 
             <Link
@@ -138,9 +171,18 @@ export default function Home() {
             </section>
           ) : null}
 
-          {!isLoading && !error && sortedNotices.length > 0 ? (
+          {!isLoading && !error && sortedNotices.length > 0 && filteredNotices.length === 0 ? (
+            <section className="rounded-2xl border border-dashed border-[#D9C9C0] bg-[#FFFDFB] p-10 text-center shadow-[0_14px_40px_rgba(91,71,61,0.08)]">
+              <h2 className="text-xl font-semibold text-[#2F2824]">No matching notices</h2>
+              <p className="mt-3 text-sm leading-6 text-[#7B6E67]">
+                Try searching by title, category, priority, date, or notice text.
+              </p>
+            </section>
+          ) : null}
+
+          {!isLoading && !error && filteredNotices.length > 0 ? (
             <section className="grid gap-5">
-              {sortedNotices.map((notice) => (
+              {filteredNotices.map((notice) => (
                 <NoticeCard
                   key={notice.id}
                   notice={notice}
